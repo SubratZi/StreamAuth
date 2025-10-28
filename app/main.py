@@ -3,12 +3,12 @@ from database import Base, engine
 from routers import auth,users,videos
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(name =  "StreamAuth", version=1.0)
+app = FastAPI(name =  "StreamAuth", version="1.0")
 
 Base.metadata.create_all(bind = engine)
 
-origins = [
-    "http://localhost:3000"]
+origins = [ 
+    "http://localhost:5173"]
 
 # Include Routers
 app.include_router(auth.router)

@@ -59,12 +59,12 @@ def login(response: Response, form_data: OAuth2PasswordRequestForm= Depends(), d
         key="refresh_token",
         value=raw_refresh_token,
         httponly=True,
-        secure=False,
+        secure=True,
         samesite="lax",
         max_age=7*24*60*60
     )
 
-    return {"access_token": access_token}
+    return {"access_token": access_token, "user": {"id": user.id, "username": user.username,"email": user.email}}
 
 @router.post("/logout")
 def logout(response: Response, refresh_token: str = Cookie(None), db: Session = Depends(get_sessions)):
@@ -74,10 +74,12 @@ def logout(response: Response, refresh_token: str = Cookie(None), db: Session = 
         if token_obj:
             token_obj.revoked = True
             db.commit()
-
+            response.delete_cookie(key="refresh_token")
+            return {"message": "Logged out successfully"}
+    else:
+        return{"message":"No valid refresh token provided"}
     # Remove cookie
-    response.delete_cookie(key="refresh_token")
-    return {"message": "Logged out successfully"}
+    
 
 def get_my_profile(current=Depends(get_current_user), request: Request = None):
     user = current["user"]
