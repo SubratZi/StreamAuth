@@ -3,6 +3,6 @@ __pycache__/
 *.py[cod]
 app/streamauth.db
 app/videos
-app/todo.text
+todo.text
 app/test.py
 .env
