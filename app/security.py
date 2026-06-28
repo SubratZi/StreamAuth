@@ -42,7 +42,7 @@ def decode_token(token:str):
 def hash_refresh_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 def get_current_user(response: Response, request:Request, db: Session = Depends(get_sessions), token:str = Depends(oauth2_scheme), refresh_token:str =Cookie(None)):
     try:

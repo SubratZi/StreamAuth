@@ -91,3 +91,4 @@ def get_my_profile(current=Depends(get_current_user), request: Request = None):
     if hasattr(request.state ,"new_access_token"):
         response["access_token"] = request.state.new_access_token
     return response
+

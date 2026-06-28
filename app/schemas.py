@@ -14,7 +14,7 @@ class UserOut(BaseModel):
     access_token: str | None = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
     @staticmethod
     def from_orm(user, access_token: str | None = None):
@@ -46,4 +46,4 @@ class VideoOut(BaseModel):
     uploaded_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True

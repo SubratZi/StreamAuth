@@ -9,7 +9,9 @@ from models import Video
 from schemas import Videolist, VideoOut
 from security import get_current_user
 from datetime import datetime,timezone
-
+from limiter import limiter
+from slowapi.util import get_remote_address
+from middleware.bandwidth import check_bandwidth, track_bandwidth
 
 VIDEO_STORAGE = "videos/"
 os.makedirs(VIDEO_STORAGE, exist_ok=True)
@@ -30,26 +32,27 @@ async def create_video(file: UploadFile = File(...), db: Session = Depends(get_s
 @router.get("/", response_model=list[Videolist])
 def list_videos(db: Session = Depends(get_sessions)):
     videos = db.query(Video).all()
-    return[{"video_id": v.id, "title": v.title, "owner_id": v.owner_id} for v in videos]
+    return videos
 
-@router.get("/{video_id}", response_model=VideoOut)
-def get_video(video_id: int, db: Session = Depends(get_sessions)):
-
+@router.get("/{video_id}")
+@limiter.limit("8/minute")
+def get_video(video_id: int, request:Request, db: Session = Depends(get_sessions), current_user= Depends(get_current_user)):
     video = db.query(Video).filter(Video.id == video_id).first()
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
 
-    path = os.path.join(VIDEO_STORAGE, video.filename)
+    path = os.path.join(VIDEO_STORAGE, video.title)
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="Video file missing")
 
+    check_bandwidth(user_id= current_user.id, is_paid = current_user.is_paid)
+
     file_size = os.path.getsize(path)
-    range_header = Request.headers.get("range")
+    range_header = request.headers.get("range")
     start = 0
     end = file_size - 1
 
     if range_header:
-        # Parse "bytes=start-end"
         ranges = range_header.replace("bytes=", "").split("-")
         start = int(ranges[0])
         if ranges[1]:
@@ -66,6 +69,7 @@ def get_video(video_id: int, db: Session = Depends(get_sessions)):
                 if not data:
                     break
                 bytes_to_send -= len(data)
+                track_bandwidth(user_id= current_user.id, bytes_sent=len(data))  
                 yield data
 
     headers = {

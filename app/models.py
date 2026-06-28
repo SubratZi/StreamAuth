@@ -12,12 +12,10 @@ class User(Base):
     roles = Column(String(50), nullable=False, default = "default")
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
+    is_paid = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
-
-  
     refresh_tokens = relationship("RefreshToken", back_populates="user")
     videos = relationship("Video", back_populates = "owner")
-
 
 
 class RefreshToken(Base):

@@ -2,6 +2,9 @@ from fastapi import FastAPI
 from database import Base, engine
 from routers import auth,users,videos
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from limiter import limiter
 
 app = FastAPI(name =  "StreamAuth", version="1.0")
 
