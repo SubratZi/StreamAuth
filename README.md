@@ -37,26 +37,26 @@ StreamAUTH/
 -README.md
 -requirements.txt
 
-## API-Endpoints
-# Auth: (POST REQUESTS)
+# API-Endpoints
+## Auth: (POST REQUESTS)
 - /auth/register
 - /auth/login 
 
-# Videos:
+## Videos:
 - /videos/ (GET REQUEST)
 - /videos/{id} (GET REQUEST)
 - /videos/upload (POST REQUEST)
 
 ## Rate-Limit & Plans:
-# Rate-Limiting:
+### Rate-Limiting:
 - Free-users: Only 8 requests/min
 - Paid-users: Unlimited requests
 
-# Bandwidth-Limiting:
+### Bandwidth-Limiting:
 - Free-users: Only 5GB in 1 month
 - Paid-users: Unlimited Bandwidth
 
-# Concurrent-Streaming:
+### Concurrent-Streaming:
 - Free-users: Only 1 device concurrently
 - Paid-users: Maximum of 3 concurrent streaming feature
 
