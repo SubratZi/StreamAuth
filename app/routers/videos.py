@@ -10,8 +10,8 @@ from schemas import Videolist, VideoOut
 from security import get_current_user
 from datetime import datetime,timezone
 from limiter import limiter
-from slowapi.util import get_remote_address
 from middleware.bandwidth import check_bandwidth, track_bandwidth
+from middleware.stream_session import start_stream, end_stream
 
 VIDEO_STORAGE = "videos/"
 os.makedirs(VIDEO_STORAGE, exist_ok=True)
@@ -45,6 +45,20 @@ def get_video(video_id: int, request:Request, db: Session = Depends(get_sessions
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="Video file missing")
 
+    # Concurrent Streaming Check
+    allowed = start_stream(user_id= current_user.id, is_paid = current_user.is_paid)
+    if not allowed:
+        if not current_user.is_paid: #For Free user
+            raise HTTPException(
+                status_code=403,
+                detail = "Streaming Limit Exceeded, Please upgrade your plan!"
+            )
+        else:                       #For paid user
+            raise HTTPException(
+                status_code=403,
+                detail = "Streaming Limit Exceeded, 3 devices streaming concurrently found!"
+            )
+    
     check_bandwidth(user_id= current_user.id, is_paid = current_user.is_paid)
 
     file_size = os.path.getsize(path)
@@ -59,18 +73,21 @@ def get_video(video_id: int, request:Request, db: Session = Depends(get_sessions
             end = int(ranges[1])
 
     def iterfile():
-        with open(path, "rb") as f:
-            f.seek(start)
-            chunk_size = 1024 * 1024  # 1MB
-            bytes_to_send = end - start + 1
-            while bytes_to_send > 0:
-                read_bytes = min(chunk_size, bytes_to_send)
-                data = f.read(read_bytes)
-                if not data:
-                    break
-                bytes_to_send -= len(data)
-                track_bandwidth(user_id= current_user.id, bytes_sent=len(data))  
-                yield data
+        try:
+            with open(path, "rb") as f:
+                f.seek(start)
+                chunk_size = 1024 * 1024  # 1MB
+                bytes_to_send = end - start + 1
+                while bytes_to_send > 0:
+                    read_bytes = min(chunk_size, bytes_to_send)
+                    data = f.read(read_bytes)
+                    if not data:
+                        break
+                    bytes_to_send -= len(data)
+                    track_bandwidth(user_id= current_user.id, bytes_sent=len(data))  
+                    yield data
+        finally:
+            end_stream(user_id=current_user.id)
 
     headers = {
         "Content-Range": f"bytes {start}-{end}/{file_size}",
