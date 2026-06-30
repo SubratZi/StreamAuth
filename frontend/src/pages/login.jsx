@@ -1,70 +1,105 @@
-import React, { useState } from "react";
-import { FiSun, FiMoon } from "react-icons/fi";
+import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useTheme } from "../context/ThemeContext";
 
-export default function Login() {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const { darkMode, toggleTheme } = useTheme();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(""); // <-- Added error state
+export default function Login(){
+    const {login} = useAuth();
+    const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(""); // clear previous error
-    try {
-      await login(username, password);
-      navigate("/dashboard");
-    } catch {
-      setError("Invalid username or password"); // <-- Show error in form
-    }
-  };
+    const[username, setUsername] = useState("");
+    const[password, setPassword] = useState("");
+    const[error,SetError] = useState("");
+    const[loading,SetLoading] = useState(false);
 
-  return (
-    <div className={`flex justify-center items-center h-screen ${darkMode ? "bg-gray-900" : "bg-gray-100"}`}>
-      <button
-        onClick={toggleTheme}
-        className="absolute top-6 right-6 p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:scale-105 transition-transform duration-200"
-        aria-label="Toggle theme"
-      >
-        {darkMode ? <FiSun className="text-yellow-400 text-2xl" /> : <FiMoon className="text-gray-800 text-2xl" />}
-      </button>
+    const handlesubmit = async (e) => {
+        e.preventDefault();
+        setError("");
+        setLoading(true);
 
-      <form
-        onSubmit={handleSubmit}
-        className={`bg-white dark:bg-gray-800/70 backdrop-blur-md p-6 rounded shadow-md w-80 border border-gray-300 dark:border-gray-700`}
-      >
-        <h1 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Login</h1>
+        try{
+            await login(username, password)
+            navigate("/");
+        } catch(err){
+            setError(
+                err?.response?.data?.detail || "login Failed"
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+    return(
+        <div style= {styles.container}>
+            <form onSubmit={handlesubmit} style = {styles.form}>
+                <h2>Login</h2>
+                {error && <p style={styles.error}>{error}</p>}
+                <input
+                    type="text"
+                    placeholder="Username"
+                    value={username}
+                    onChange={(e)=> 
+                        setUsername(e.target.value)
+                    }
+                    style={styles.input}
+                />
 
-        <input
-          className="w-full border p-2 mb-2 rounded dark:bg-gray-700 dark:text-white"
-          placeholder="Username"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
-        />
-        <input
-          className="w-full border p-2 mb-2 rounded dark:bg-gray-700 dark:text-white"
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-        />
-
-        {error && (
-          <p className="text-red-500 text-sm mb-2 text-center">{error}</p> 
-        )}
-
-        <button className="bg-blue-500 dark:bg-blue-600 text-white w-full p-2 rounded" type="submit">
-          Login
-        </button>
-
-        <p className={`mt-4 text-center ${darkMode ? "text-gray-200" : "text-gray-800"}`}>
-          Don't have an account? <a href="/register" className="underline">Register</a>
-        </p>
-      </form>
-    </div>
-  );
+                <input
+                    type = "password"
+                    placeholder="Password"
+                    value = {password}
+                    onChange= {(e)=>
+                            setPassword(e.target.value)    
+                    }
+                    style = {styles.input}
+                />
+                <button
+                    type="submit"
+                    disabled= {loading}
+                    style={styles.button}
+                >
+                    {loading ? "logging in..." : "Login"}
+                </button>
+            </form>
+        </div>
+    );
 }
+
+const styles = {
+    container:{
+        height: "100vh",
+        display: "flex",
+        justifyContent:"center",
+        alignItems: "center",
+        background: "#0f172a",
+        color: "white",
+    },
+    form :{
+        display:"flex",
+        flexDirection:"column",
+        gap:"15px",
+        padding:"30px",
+        background:"#1e293b",
+        borderRadius:"12px",
+        width:"320px",
+        boxShadow:"0 10px 30px rgba(0,0,0,0.3)",
+    },
+    input:{
+        padding:"10px",
+        borderRadius:"8px",
+        border:"1px solid #331455",
+        outline:"none",
+        fontSize:"14px",
+    },
+    button:{
+        padding:"10px",
+        background:"#3b82f6",
+        color:"white",
+        border:"none",
+        borderRadius:"5px",
+        cursor:"pointer",
+        fontWeight:"bold",
+    },
+    error:{
+        color: "red",
+        fontSize:"14px",
+    },
+};

@@ -1,36 +1,37 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import Navbar from "./components/Navbar";
-import Dashboard from "./pages/Dashboard";
+import { Routes, Route, Navigate} from "react-router-dom";
+import { useAuth } from "./context/Authcontext";
+
 import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Profile from "./pages/Profile";
 
-function AppContent() {
-  const { user, loading } = useAuth();
+function ProtectedRoute({children}) {
+  const {user} = useAuth();
 
-  if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  if(!user){
+    return <Navigate to = "/login" replace />;
+  }
+  return children;
+}
 
+function App(){
   return (
-    <>
-      {user && <Navbar />}
-
-      <Routes>
-        <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Login />} />
-        <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/" />} />
-        <Route path="/profile" element={user ? <Profile /> : <Navigate to="/" />} />
-        <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
-        <Route path="/register" element={!user ? <Register /> : <Navigate to="/dashboard" />} />
-      </Routes>
-    </>
+    <Routes>
+      {/* Public Route */}
+      <Route path = "/login" element={<Login />} />
+      {/* Route Redirect */}
+      <Route path = "/" element={<Navigate to="/login" replace/>} />
+      {/* Protected Placeholders */}
+      {/* 
+      <Route
+        path = "/home"
+        element= {
+          <ProtectedRoute>
+            <Home/>
+          </ProtectedRoute>
+        } 
+      />
+         */}
+    </Routes> 
   );
 }
 
-export default function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
-}
-
+export default App;
