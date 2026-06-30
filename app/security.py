@@ -97,3 +97,15 @@ def get_current_user(response: Response, request:Request, db: Session = Depends(
             raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
     except JWTError:
       raise HTTPException(status_code=401, detail="Invalid token")
+    
+def require_role(*allowed_roles):
+    def role_checker(current_user = Depends(get_current_user)):
+        if current_user.roles not in allowed_roles:
+            raise HTTPException(
+                status_code =status.HTTP_403_FORBIDDEN,
+                detail="You don't have permission to do this action"
+            )
+        return current_user
+    
+    return role_checker
+

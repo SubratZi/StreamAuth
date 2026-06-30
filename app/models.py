@@ -9,7 +9,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
     email = Column(String(100), unique=True, nullable=False, index=True)
-    roles = Column(String(50), nullable=False, default = "default")
+    roles = Column(String(50), nullable=False, default = "basic")
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     is_paid = Column(Boolean, default=False)
@@ -34,7 +34,6 @@ class Video(Base):
     __tablename__ = "videos"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
-    url = Column(String, unique=True, nullable = True)
     owner_id = Column(Integer, ForeignKey("users.id"))
     uploaded_at = Column(DateTime, default=datetime.now(timezone.utc))
 
