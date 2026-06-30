@@ -1,59 +1,69 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import api from "../services/api";
+import {createContext, useContext, useEffect, useState} from "react";
+import {loginUser, logoutUser} from "../api/auth";
+import {getCurrentUser} from "../api/users";
 
 const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+export function AuthProvider ({children}){
+    const[user, setUser] = useState(null);
+    const[loading, setloading] = useState(true);
+    
+    useEffect(() => {
+        initializeAuth();
+    }, []);
+    const initializeAuth = async () =>{
+        const token = localStorage.getItem("access_token");
+        if(!token){
+            setloading(false);
+            return;
+        }
 
-  // restore user on page load
-  const checkAuth = async () => {
-    try {
-      const { data } = await api.get("/users/me", { withCredentials: true }); 
-      setUser(data);
-    } catch (err) {
-      console.log("Auth restore failed: ", err);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+        try {
+            const profile = await getCurrentUser();
+            if (profile.access_token){
+                localStorage.setItem(
+                    "access_token",
+                    profile.access_token
+                );
+            }
+            setUser(profile);
+        }catch (error){
+            console.error(error);
+            localStorage.removeItem("access_token");
+            setUser(null);
+        }finally{
+            setloading(false);
+        }
+        
+    };
+    const login = async(username, password) =>{
+        const data = await loginUser(username, password);
+        localStorage.setItem(
+            "access_token",
+            data.access_token
+        );
+        setUser(data.user);
+        return data.user;
+    };
+    const logout = async()=>{
+        try{
+            await logoutUser();
+        }catch(error){
+            console.error(error);
+        }
+        localStorage.removeItem("access_token");
+        setUser(null);
+    };
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
+    return (
+        <AuthContext.Provider
+            value={{user,loading,login,logout,isAuthenticated:!!user,}}
+        >
+            {children}
+        </AuthContext.Provider>
+    );
+}
 
-  const login = async (username, password) => {
-    const form = new URLSearchParams();
-    form.append("username", username);
-    form.append("password", password);
-
-    const { data } = await api.post("/auth/login", form, {
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      withCredentials: true 
-    });
-
-    setUser(data.user);
-  };
-
-  const register = async (formData) => {
-    const { data } = await api.post("/auth/register", formData, { withCredentials: true });
-    setUser(data.user);
-  };
-
-  const logout = async () => {
-    try {
-      await api.post("/auth/logout", {}, { withCredentials: true });
-    } catch {}
-    setUser(null);
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-export const useAuth = () => useContext(AuthContext);
+export function useAuth(){
+    return useContext(AuthContext);
+}

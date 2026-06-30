@@ -19,21 +19,42 @@ StreamAuth is a scalable, token-authenticated video-serving API designed for mul
 
 ## Project Structure
 StreamAUTH/
--app/
---middleware/
----bandwidth.py
----stream_session.py
---routers/
----auth.py
----users.py
----videos.py
---main.py
---models.py
---security.py
---database.py
---limiter.py
---schemas.py
--frontend/
+├──app/
+│   ├──middleware/
+│   │   ├──bandwidth.py
+│   │   ├──stream_session.py
+│   ├──routers/
+│   │   ├──auth.py
+│   │   ├──users.py
+│   │   ├──videos.py
+│   ├──main.py
+│   ├──models.py
+│   ├──security.py
+│   ├──database.py
+│   ├──limiter.py
+│   ├──schemas.py
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── api/
+│   │   ├──   └── auth.js
+│   │   ├──   └── axios.js
+│   │   ├──   └── users.js
+│   │   ├──   └── videos.js
+│   │   ├── assets/
+│   │   ├── components/
+│   │   ├──   └── AdminRoute.jsx
+│   │   ├──   └── Navbar.jsx
+│   │   ├──   └── ProtectedRoute.jsx
+│   │   ├──   └── VideoCard.jsx
+│   │   ├──   └── VideoPlayer.jsx
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx
+│   │   ├── pages/
+│   │   ├── App.css
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   └── main.jsx
 -README.md
 -requirements.txt
 
