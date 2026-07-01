@@ -19,7 +19,7 @@ os.makedirs(VIDEO_STORAGE, exist_ok=True)
 router = APIRouter(prefix="/videos", tags=["videos"])
 
 @router.post("/upload", response_model=VideoOut)
-async def create_video(file: UploadFile = File(...), db: Session = Depends(get_sessions), current_user=Depends(get_current_user)):
+async def create_video(file: UploadFile = File(...), db: Session = Depends(get_sessions), current_user=Depends(require_role("admin"))):
     video_path  = os.path.join(VIDEO_STORAGE, file.filename)
     with open(video_path, "wb") as f:
         f.write(await file.read())
@@ -121,9 +121,17 @@ def get_video(video_id: int, request:Request, db: Session = Depends(get_sessions
 
 @router.delete("/{video_id}")
 def delete_video(video_id: int, db: Session = Depends(get_sessions), current_user=Depends(get_current_user)):
-    video = db.query(Video).filter(Video.id == video_id, Video.owner_id == current_user.id).first()
+    if current_user.roles == "admin":
+        video = db.query(Video).filter(video.id ==video_id).first()
+    else:
+        video = db.query(Video).filter(Video.id == video_id, Video.owner_id == current_user.id).first()
     if not video:
-        raise HTTPException(status_code=404, detail="Video not found or not owned by you")
+        raise HTTPException(status_code=404, detail="Video not found or you dont have permission")
+    
+    path = os.path.join(VIDEO_STORAGE, video.title)
+    if os.path.exists(path):
+        os.remove(path)
+
     db.delete(video)
     db.commit()
     return {"message": "Video deleted"}
