@@ -25,7 +25,7 @@ export const uploadVideo = async(file) => {
 
 // Streaming URL
 export const getVideoStreamURL = (videoId) => {
-    return `http://127.0.0.1:8000/videos/${videoId}?token=${token}`;
+    return `${import.meta.env.VITE_API_URL}${videoId}?token=${token}`;
 };
 
 // Delete video

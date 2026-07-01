@@ -113,7 +113,7 @@ def get_video(video_id: int, request:Request, db: Session = Depends(get_sessions
         value=session_id,
         httponly=True,
         samesite="lax",
-        secure=False,
+        secure=True,
         max_age=3600,
     )
 
