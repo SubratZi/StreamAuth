@@ -131,7 +131,7 @@ def get_current_user(
             key="refresh_token",
             value=new_refresh_token,
             httponly=True,
-            secure=False,
+            secure=True,
             samesite="lax",
             max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         )
@@ -143,6 +143,7 @@ def get_current_user(
             status_code=401,
             detail="Invalid token",
         )
+<<<<<<< Updated upstream
         
 def require_role(*allowed_roles):
     def role_checker(current_user = Depends(get_current_user)):
@@ -155,3 +156,16 @@ def require_role(*allowed_roles):
     
     return role_checker
 
+=======
+
+def require_role(*allowed_roles):
+    def role_checker(current_user=Depends(get_current_user)):
+        if current_user.roles not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have permission to do this action",
+            )
+        return current_user
+
+    return role_checker
+>>>>>>> Stashed changes
