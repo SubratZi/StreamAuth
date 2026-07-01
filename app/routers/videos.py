@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from database import get_sessions
 from models import Video
 from schemas import Videolist, VideoOut
-from security import get_current_user
+from security import get_current_user, require_role
 from datetime import datetime,timezone
 from limiter import limiter
 from middleware.bandwidth import check_bandwidth, track_bandwidth
