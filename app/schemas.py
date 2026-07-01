@@ -12,6 +12,8 @@ class UserOut(BaseModel):
     email: EmailStr | None = None
     created_at: str
     access_token: str | None = None
+    roles: str
+    is_paid: bool
 
     class Config:
         from_attributes = True
@@ -32,7 +34,10 @@ class UserOut(BaseModel):
         username=user.username,
         email=getattr(user, "email", None),
         created_at=local_time.strftime("%Y-%m-%d %H:%M:%S"),
-        access_token=access_token)
+        access_token=access_token,
+        roles=user.roles,
+        is_paid=user.is_paid,
+        )
 
 class Videolist(BaseModel):
     id:int

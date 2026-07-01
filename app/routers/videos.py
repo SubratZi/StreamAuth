@@ -11,7 +11,7 @@ from security import get_current_user
 from datetime import datetime,timezone
 from limiter import limiter
 from middleware.bandwidth import check_bandwidth, track_bandwidth
-from middleware.stream_session import start_stream, end_stream
+from middleware.stream_session import (start_stream,heartbeat_stream,end_stream,create_stream_session,)
 
 VIDEO_STORAGE = "videos/"
 os.makedirs(VIDEO_STORAGE, exist_ok=True)
@@ -37,16 +37,21 @@ def list_videos(db: Session = Depends(get_sessions)):
 @router.get("/{video_id}")
 @limiter.limit("8/minute")
 def get_video(video_id: int, request:Request, db: Session = Depends(get_sessions), current_user= Depends(get_current_user)):
+    if current_user is None:
+        raise HTTPException(status_code=401, detail="Unauthorized")
     video = db.query(Video).filter(Video.id == video_id).first()
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
 
     path = os.path.join(VIDEO_STORAGE, video.title)
+    session_id = request.cookies.get("stream_session")
+    if not session_id:
+        session_id = create_stream_session()
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="Video file missing")
 
     # Concurrent Streaming Check
-    allowed = start_stream(user_id= current_user.id, is_paid = current_user.is_paid)
+    allowed = start_stream(user_id=current_user.id,is_paid=current_user.is_paid,session_id=session_id,)
     if not allowed:
         if not current_user.is_paid: #For Free user
             raise HTTPException(
@@ -79,6 +84,7 @@ def get_video(video_id: int, request:Request, db: Session = Depends(get_sessions
                 chunk_size = 1024 * 1024  # 1MB
                 bytes_to_send = end - start + 1
                 while bytes_to_send > 0:
+                    heartbeat_stream(session_id)
                     read_bytes = min(chunk_size, bytes_to_send)
                     data = f.read(read_bytes)
                     if not data:
@@ -86,8 +92,8 @@ def get_video(video_id: int, request:Request, db: Session = Depends(get_sessions
                     bytes_to_send -= len(data)
                     track_bandwidth(user_id= current_user.id, bytes_sent=len(data))  
                     yield data
-        finally:
-            end_stream(user_id=current_user.id)
+        finally: 
+            end_stream(session_id)
 
     headers = {
         "Content-Range": f"bytes {start}-{end}/{file_size}",
@@ -96,7 +102,22 @@ def get_video(video_id: int, request:Request, db: Session = Depends(get_sessions
         "Content-Type": "video/mp4"
     }
 
-    return StreamingResponse(iterfile(), status_code=206 if range_header else 200, headers=headers)
+    response = StreamingResponse(
+        iterfile(),
+        status_code=206 if range_header else 200,
+        headers=headers,
+    )
+
+    response.set_cookie(
+        key="stream_session",
+        value=session_id,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        max_age=3600,
+    )
+
+    return response
 
 @router.delete("/{video_id}")
 def delete_video(video_id: int, db: Session = Depends(get_sessions), current_user=Depends(get_current_user)):

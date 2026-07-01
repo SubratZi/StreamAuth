@@ -44,56 +44,102 @@ def hash_refresh_token(token: str) -> str:
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
-def get_current_user(response: Response, request:Request, db: Session = Depends(get_sessions), token:str = Depends(oauth2_scheme), refresh_token:str =Cookie(None)):
+def get_current_user(
+    response: Response,
+    request: Request,
+    db: Session = Depends(get_sessions),
+    token: str = Depends(oauth2_scheme),
+    refresh_token: str | None = Cookie(None),
+):
     try:
         payload = decode_token(token)
         username = payload.get("sub")
-        user = db.query(User).filter(User.username == username, User.is_active==True).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        return user
-        
-    except ExpiredSignatureError:
-        now = datetime.now(timezone.utc)
-        if refresh_token:
-            hased_token = hash_refresh_token(refresh_token)
-            token_obj = (
-            db.query(RefreshToken)
+
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+        user = (
+            db.query(User)
             .filter(
-                RefreshToken.token_hash == hased_token,
-                RefreshToken.revoked == False,
-                RefreshToken.expires_at > now
+                User.username == username,
+                User.is_active == True,
             )
             .first()
-            )
-            if token_obj:
-                user = token_obj.user
-                roles = user.roles
-                new_access_token = create_access_token({"sub":user.username, "roles":roles})
-                new_refresh_token = create_refresh_token()
-                new_refresh_token_hash = hash_refresh_token(new_refresh_token)
-                request.state.new_access_token = new_access_token
-                response.set_cookie(
-                    key="refresh_token",
-                    value=new_refresh_token,
-                    httponly=True,
-                    secure=False,
-                    samesite="lax",
-                    max_age=REFRESH_TOKEN_EXPIRE_DAYS*24*60*60
-                )
+        )
 
-                new_refresh_obj = RefreshToken( 
-                    user_id=user.id,
-                    token_hash=new_refresh_token_hash,
-                    created_at=now,
-                    expires_at=now + timedelta(days=7),
-                    revoked=False
-                )
-                db.add(new_refresh_obj)
-                token_obj.revoked = True
-                token_obj.last_used = now
-                db.commit()
-                return user 
-            raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+        if user is None:
+            raise HTTPException(status_code=401, detail="User not found")
+
+        return user
+
+    except ExpiredSignatureError:
+        if not refresh_token:
+            raise HTTPException(
+                status_code=401,
+                detail="Refresh token missing",
+            )
+
+        now = datetime.now(timezone.utc)
+
+        hashed_token = hash_refresh_token(refresh_token)
+
+        token_obj = (
+            db.query(RefreshToken)
+            .filter(
+                RefreshToken.token_hash == hashed_token,
+                RefreshToken.revoked == False,
+                RefreshToken.expires_at > now,
+            )
+            .first()
+        )
+
+        if token_obj is None:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid or expired refresh token",
+            )
+
+        user = token_obj.user
+
+        new_access_token = create_access_token(
+            {
+                "sub": user.username,
+                "roles": user.roles,
+            }
+        )
+
+        new_refresh_token = create_refresh_token()
+
+        token_obj.revoked = True
+        token_obj.last_used = now
+
+        db.add(
+            RefreshToken(
+                user_id=user.id,
+                token_hash=hash_refresh_token(new_refresh_token),
+                created_at=now,
+                expires_at=now + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
+                revoked=False,
+            )
+        )
+
+        db.commit()
+
+        request.state.new_access_token = new_access_token
+
+        response.set_cookie(
+            key="refresh_token",
+            value=new_refresh_token,
+            httponly=True,
+            secure=False,
+            samesite="lax",
+            max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+        )
+
+        return user
+
     except JWTError:
-      raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token",
+        )

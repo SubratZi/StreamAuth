@@ -3,7 +3,7 @@ import api from "./axios";
 // all videos
 
 export const getVideos = async () => {
-    const response = await api.get("/videos");
+    const response = await api.get("/videos/");
     return response.data;
 };
 
@@ -25,11 +25,11 @@ export const uploadVideo = async(file) => {
 
 // Streaming URL
 export const getVideoStreamURL = (videoId) => {
-    return `html://127.0.0.1:8000/videos/${videoId}`
+    return `http://127.0.0.1:8000/videos/${videoId}?token=${token}`;
 };
 
 // Delete video
-export const deleteVideo = (videoId) =>{
+export const deleteVideo = async (videoId) =>{
     const response = await api.delete(`/videos/${videoId}`);
     return response.data;
 }

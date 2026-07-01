@@ -9,7 +9,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
     email = Column(String(100), unique=True, nullable=False, index=True)
-    roles = Column(String(50), nullable=False, default = "default")
+    roles = Column(String(50), nullable=False, default = "basic")
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     is_paid = Column(Boolean, default=False)
