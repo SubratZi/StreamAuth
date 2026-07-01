@@ -34,7 +34,6 @@ class Video(Base):
     __tablename__ = "videos"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
-    url = Column(String, unique=True, nullable = True)
     owner_id = Column(Integer, ForeignKey("users.id"))
     uploaded_at = Column(DateTime, default=datetime.now(timezone.utc))
 
