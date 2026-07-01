@@ -64,7 +64,7 @@ def login(response: Response, form_data: OAuth2PasswordRequestForm= Depends(), d
         max_age=7*24*60*60
     )
 
-    return {"access_token": access_token, "user": {"id": user.id, "username": user.username,"email": user.email,"roles": user.roles,"is_paid": user.is_paid}}
+    return {"access_token": access_token, "user": {"id": user.id, "username": user.username,"email": user.email,"role": user.roles,"is_paid": user.is_paid}}
 
 @router.post("/logout")
 def logout(response: Response, refresh_token: str = Cookie(None), db: Session = Depends(get_sessions)):
