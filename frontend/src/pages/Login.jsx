@@ -68,6 +68,13 @@ export default function Login() {
                     </Link>
                 </p>
 
+                <p style={styles.footer}>
+                    Want to explore?{" "}
+                    <Link to="/demo" style={{ color: "#f59e0b", textDecoration: "none" }}>
+                        Try Demo 🚀
+                    </Link>
+                </p>
+
                 <button
                     type="submit"
                     disabled={submitting}

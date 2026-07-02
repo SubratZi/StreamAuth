@@ -29,6 +29,11 @@ export default function Navbar(){
                         Upload
                     </Link>
                 )}
+                {!user?.is_paid && user?.roles !== "admin" && (
+                    <Link style={{ ...styles.link, color: "#f59e0b", fontWeight: "bold" }} to="/subscribe">
+                        Upgrade 👑
+                    </Link>
+                )}
             </div>
 
             <div style={styles.right}>

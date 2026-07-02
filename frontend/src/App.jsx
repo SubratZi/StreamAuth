@@ -9,6 +9,8 @@ import NotFound from "./pages/NotFound";
 import Video from "./pages/Video"
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
+import Subscribe from "./pages/Subscribe";
+import Demo from "./pages/Demo";
 
 function App(){
   return (
@@ -16,6 +18,7 @@ function App(){
       {/* Public Route */}
       <Route path = "/login" element={<Login />} />
       <Route path = "/register" element={<Register/>} />
+      <Route path= "/demo" element={<Demo/>} />
 
       {/* Home */}
       <Route path = "/home" element={<ProtectedRoute><Home/></ProtectedRoute>} />
@@ -23,6 +26,7 @@ function App(){
       {/* Protected Routes */}
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>}/> 
       <Route path="/video/:id" element={<ProtectedRoute><Video/></ProtectedRoute>}/>
+      <Route path="/subscribe" element={<ProtectedRoute><Subscribe /></ProtectedRoute>} />
 
       {/* Route Redirect */}
       <Route path = "/" element={<Navigate to="/login" replace/>} />
