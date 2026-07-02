@@ -8,7 +8,7 @@ export default function Demo() {
     const handleDemo = async () => {
         console.log("API URL:", import.meta.env.VITE_API_URL)
         try {
-            await login("hackclub1", "hackclub123");
+            await login("demo", "123");
             navigate("/home");
         } catch (err) {
             console.error("Demo login failed", err);
