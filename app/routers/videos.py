@@ -20,14 +20,33 @@ os.makedirs(VIDEO_STORAGE, exist_ok=True)
 router = APIRouter(prefix="/videos", tags=["videos"])
 
 @router.post("/upload", response_model=VideoOut)
-async def create_video(file: UploadFile = File(...), db: Session = Depends(get_sessions), current_user=Depends(require_role("admin"))):
+async def create_video(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_sessions),
+    current_user=Depends(require_role("admin")),
+):
     video_path = os.path.join(VIDEO_STORAGE, file.filename)
-    with open(video_path, "wb") as f:
-        f.write(await file.read())
-    db_video = Video(title=file.filename, owner_id=current_user.id, uploaded_at=datetime.now(timezone.utc))
+
+    try:
+        with open(video_path, "wb") as buffer:
+            while True:
+                chunk = await file.read(1024 * 1024)  # 1 MB
+                if not chunk:
+                    break
+                buffer.write(chunk)
+    finally:
+        await file.close()
+
+    db_video = Video(
+        title=file.filename,
+        owner_id=current_user.id,
+        uploaded_at=datetime.now(timezone.utc),
+    )
+
     db.add(db_video)
     db.commit()
     db.refresh(db_video)
+
     return db_video
 
 @router.get("/", response_model=list[Videolist])
