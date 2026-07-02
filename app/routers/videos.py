@@ -122,7 +122,7 @@ def get_video(
         key="stream_session",
         value=session_id,
         httponly=True,
-        samesite="lax",
+        samesite="none",
         secure=is_production,
         max_age=3600,
     )

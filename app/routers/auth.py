@@ -62,7 +62,7 @@ def login(response: Response, form_data: OAuth2PasswordRequestForm= Depends(), d
         value=raw_refresh_token,
         httponly=True,
         secure=is_production,
-        samesite="lax",
+        samesite="none",
         max_age=7*24*60*60
     )
 
