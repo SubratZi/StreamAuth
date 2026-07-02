@@ -11,7 +11,8 @@ Base.metadata.create_all(bind = engine)
 
 origins = [ 
     "http://localhost:5173",
-    "http://127.0.0.1:5173",]
+    "http://127.0.0.1:5173",
+     "https//streamingauth.vercel.app",]
 
 # Include Routers
 app.include_router(auth.router)
