@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
 from schemas import UserCreate
-
+import os
 from database import get_sessions
 from models import User, RefreshToken
 from security import (
@@ -14,6 +14,8 @@ from security import (
     hash_refresh_token,
     get_current_user
 )
+
+is_production = os.getenv("ENVIRONMENT", "development") == "production"
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -59,7 +61,7 @@ def login(response: Response, form_data: OAuth2PasswordRequestForm= Depends(), d
         key="refresh_token",
         value=raw_refresh_token,
         httponly=True,
-        secure=True,
+        secure=is_production,
         samesite="lax",
         max_age=7*24*60*60
     )

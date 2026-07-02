@@ -1,7 +1,8 @@
 import redis
 import uuid
+import os
 
-r = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
+r = redis.Redis(host=os.getenv("REDIS_HOST", "localhost"),port=int(os.getenv("REDIS_PORT", 6379)),password=os.getenv("REDIS_PASSWORD", None), db=0, decode_responses=True)
 
 FREE_STREAMING_LIMIT = 1
 PAID_STREAMING_LIMIT = 4

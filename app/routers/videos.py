@@ -9,9 +9,11 @@ from models import Video
 from schemas import Videolist, VideoOut
 from security import get_current_user, require_role
 from datetime import datetime,timezone
-from limiter import limiter
 from middleware.bandwidth import check_bandwidth, track_bandwidth
 from middleware.stream_session import (start_stream,heartbeat_stream,end_stream,create_stream_session,)
+from middleware.rate_limit import check_rate_limit
+
+is_production = os.getenv("ENVIRONMENT", "development") == "production"
 
 VIDEO_STORAGE = "videos/"
 os.makedirs(VIDEO_STORAGE, exist_ok=True)
@@ -35,16 +37,18 @@ def list_videos(db: Session = Depends(get_sessions)):
     return videos
 
 @router.get("/{video_id}")
-@limiter.limit("8/minute")
 def get_video(video_id: int, request:Request, db: Session = Depends(get_sessions), current_user= Depends(get_current_user)):
     if current_user is None:
         raise HTTPException(status_code=401, detail="Unauthorized")
+    check_rate_limit(current_user)
+
     video = db.query(Video).filter(Video.id == video_id).first()
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
 
     path = os.path.join(VIDEO_STORAGE, video.title)
     session_id = request.cookies.get("stream_session")
+
     if not session_id:
         session_id = create_stream_session()
     if not os.path.exists(path):
@@ -64,7 +68,7 @@ def get_video(video_id: int, request:Request, db: Session = Depends(get_sessions
                 detail = "Streaming Limit Exceeded, 3 devices streaming concurrently found!"
             )
     
-    check_bandwidth(user_id= current_user.id, is_paid = current_user.is_paid)
+    check_bandwidth(current_user)
 
     file_size = os.path.getsize(path)
     range_header = request.headers.get("range")
@@ -113,7 +117,7 @@ def get_video(video_id: int, request:Request, db: Session = Depends(get_sessions
         value=session_id,
         httponly=True,
         samesite="lax",
-        secure=True,
+        secure=is_production,
         max_age=3600,
     )
 
@@ -122,7 +126,7 @@ def get_video(video_id: int, request:Request, db: Session = Depends(get_sessions
 @router.delete("/{video_id}")
 def delete_video(video_id: int, db: Session = Depends(get_sessions), current_user=Depends(get_current_user)):
     if current_user.roles == "admin":
-        video = db.query(Video).filter(video.id ==video_id).first()
+        video = db.query(Video).filter(Video.id ==video_id).first()
     else:
         video = db.query(Video).filter(Video.id == video_id, Video.owner_id == current_user.id).first()
     if not video:
