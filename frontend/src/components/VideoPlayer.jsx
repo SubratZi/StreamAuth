@@ -1,27 +1,35 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import api from "../api/axios";
 
 export default function VideoPlayer({ videoID }) {
-    const [videoUrl, setVideoUrl] = useState(null);
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(true);
+    const videoRef = useRef(null);
 
     useEffect(() => {
         const loadVideo = async () => {
             try {
-                const response = await api.get(`/videos/${videoID}`, {
-                    responseType: "blob",
-                });
+                const res = await api.get(`/videos/${videoID}/stream-token`);
+                const { token } = res.data;
 
-                const blob = new Blob([response.data], {
-                    type: "video/mp4",
-                });
-
-                const url = URL.createObjectURL(blob);
-                setVideoUrl(url);
+                if (videoRef.current) {
+                    videoRef.current.src = `${import.meta.env.VITE_API_URL}/videos/${videoID}?token=${token}`;
+                }
+                setLoading(false);
             } catch (err) {
-                setError(
-                    err?.response?.data?.detail || "Failed to load video"
-                );
+                if (err?.response?.data instanceof Blob) {
+                    const text = await err.response.data.text();
+                    try {
+                        const json = JSON.parse(text);
+                        const detail = json?.detail;
+                        setError(typeof detail === "object" ? detail?.message : detail || "Failed to load video");
+                    } catch {
+                        setError("Failed to load video");
+                    }
+                } else {
+                    setError(err?.response?.data?.detail || "Failed to load video");
+                }
+                setLoading(false);
             }
         };
 
@@ -31,11 +39,13 @@ export default function VideoPlayer({ videoID }) {
     return (
         <div style={styles.container}>
             {error && <p style={{ color: "red" }}>{error}</p>}
-
-            {videoUrl ? (
-                <video controls style={styles.video} src={videoUrl} />
-            ) : (
-                <p>Loading video...</p>
+            {loading && <p style={{ color: "white" }}>Loading...</p>}
+            {!error && (
+                <video
+                    ref={videoRef}
+                    controls
+                    style={styles.video}
+                />
             )}
         </div>
     );
@@ -45,10 +55,12 @@ const styles = {
     container: {
         width: "100%",
         display: "flex",
-        justifyContent: "center",
+        flexDirection: "column",
+        alignItems: "center",
     },
     video: {
         maxWidth: "1000px",
+        width: "100%",
         borderRadius: "12px",
         background: "black",
     },
