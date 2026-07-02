@@ -9,10 +9,13 @@ app = FastAPI(name =  "StreamAuth", version="1.0")
 
 Base.metadata.create_all(bind = engine)
 
-origins = [ 
+origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-     "https//streamingauth.vercel.app",]
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "https://streamingauth.vercel.app",
+]
 
 # Include Routers
 app.include_router(auth.router)

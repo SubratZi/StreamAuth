@@ -1,21 +1,19 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import api from "../api/axios";
 
 export default function VideoPlayer({ videoID }) {
+    const [videoUrl, setVideoUrl] = useState(null);
     const [error, setError] = useState("");
-    const [loading, setLoading] = useState(true);
-    const videoRef = useRef(null);
 
     useEffect(() => {
         const loadVideo = async () => {
             try {
-                const res = await api.get(`/videos/${videoID}/stream-token`);
-                const { token } = res.data;
-
-                if (videoRef.current) {
-                    videoRef.current.src = `${import.meta.env.VITE_API_URL}/videos/${videoID}?token=${token}`;
-                }
-                setLoading(false);
+                const response = await api.get(`/videos/${videoID}`, {
+                    responseType: "blob",
+                });
+                const blob = new Blob([response.data], { type: "video/mp4" });
+                const url = URL.createObjectURL(blob);
+                setVideoUrl(url);
             } catch (err) {
                 if (err?.response?.data instanceof Blob) {
                     const text = await err.response.data.text();
@@ -29,7 +27,6 @@ export default function VideoPlayer({ videoID }) {
                 } else {
                     setError(err?.response?.data?.detail || "Failed to load video");
                 }
-                setLoading(false);
             }
         };
 
@@ -39,14 +36,8 @@ export default function VideoPlayer({ videoID }) {
     return (
         <div style={styles.container}>
             {error && <p style={{ color: "red" }}>{error}</p>}
-            {loading && <p style={{ color: "white" }}>Loading...</p>}
-            {!error && (
-                <video
-                    ref={videoRef}
-                    controls
-                    style={styles.video}
-                />
-            )}
+            {!videoUrl && !error && <p style={{ color: "white" }}>Loading video...</p>}
+            {videoUrl && <video controls style={styles.video} src={videoUrl} />}
         </div>
     );
 }
