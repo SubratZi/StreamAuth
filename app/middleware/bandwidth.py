@@ -4,7 +4,7 @@ import os
 
 r = redis.Redis(host=os.getenv("REDIS_HOST", "localhost"),port=int(os.getenv("REDIS_PORT", 6379)),password=os.getenv("REDIS_PASSWORD", None), db= 0, decode_responses=True)
 
-FREE_LIMIT = 500*1024*1024
+FREE_LIMIT = 20*1024*1024
 PAID_LIMIT = 5*1024*1024*1024
 
 def get_bandwidth_key(user_id:int):
