@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from middleware.bandwidth import check_bandwidth, track_bandwidth
 from middleware.stream_session import (start_stream, heartbeat_stream, end_stream, create_stream_session)
 from middleware.rate_limit import check_rate_limit
+from middleware.upload_bandwidth import (check_upload_bandwidth,track_upload_bandwidth,)
 
 is_production = os.getenv("ENVIRONMENT", "development") == "production"
 
@@ -24,7 +25,10 @@ async def create_video(
     file: UploadFile = File(...),
     db: Session = Depends(get_sessions),
     current_user=Depends(require_role("admin")),
-):
+): 
+    
+    check_rate_limit(current_user, action="upload")
+    check_upload_bandwidth(current_user)
     video_path = os.path.join(VIDEO_STORAGE, file.filename)
 
     try:
@@ -34,6 +38,7 @@ async def create_video(
                 if not chunk:
                     break
                 buffer.write(chunk)
+                track_upload_bandwidth(current_user.id,len(chunk),)
     finally:
         await file.close()
 
