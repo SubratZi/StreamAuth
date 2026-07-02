@@ -36,7 +36,7 @@ export default function VideoPlayer({ videoID }) {
     return (
         <div style={styles.container}>
             {error && <p style={{ color: "red" }}>{error}</p>}
-            {!videoUrl && !error && <p style={{ color: "white" }}>Loading video...</p>}
+            {!videoUrl && !error && <p style={{ color: "white" }}>Loading video... DOWNLOADING PLEASE WAIT</p>}
             {videoUrl && <video controls style={styles.video} src={videoUrl} />}
         </div>
     );
