@@ -1,11 +1,10 @@
 import os
-import secrets
 import redis
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request, Query
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from database import get_sessions
-from models import Video, User
+from models import Video
 from schemas import Videolist, VideoOut
 from security import get_current_user, require_role
 from datetime import datetime, timezone
@@ -19,15 +18,6 @@ VIDEO_STORAGE = "videos/"
 os.makedirs(VIDEO_STORAGE, exist_ok=True)
 
 router = APIRouter(prefix="/videos", tags=["videos"])
-
-# Redis connection
-r = redis.Redis(
-    host=os.getenv("REDIS_HOST", "localhost"),
-    port=int(os.getenv("REDIS_PORT", 6379)),
-    password=os.getenv("REDIS_PASSWORD", None),
-    db=0,
-    decode_responses=True
-)
 
 @router.post("/upload", response_model=VideoOut)
 async def create_video(file: UploadFile = File(...), db: Session = Depends(get_sessions), current_user=Depends(require_role("admin"))):
@@ -45,34 +35,13 @@ def list_videos(db: Session = Depends(get_sessions)):
     videos = db.query(Video).all()
     return videos
 
-# Stream token endpoint
-@router.get("/{video_id}/stream-token")
-def get_stream_token(video_id: int, current_user=Depends(get_current_user)):
-    token = secrets.token_urlsafe(32)
-    r_key = f"stream_token:{token}"
-    r.setex(r_key, 60, f"{current_user.id}:{video_id}")  # valid 60 seconds
-    return {"token": token}
-
 @router.get("/{video_id}")
 def get_video(
     video_id: int,
     request: Request,
-    token: str = Query(None),  # 👈 for browser video tag
     db: Session = Depends(get_sessions),
     current_user=Depends(get_current_user)
 ):
-    # Verify stream token if provided
-    if token:
-        r_key = f"stream_token:{token}"
-        value = r.get(r_key)
-        if not value:
-            raise HTTPException(status_code=401, detail="Invalid or expired stream token")
-        user_id, vid_id = value.split(":")
-        if int(vid_id) != video_id:
-            raise HTTPException(status_code=403, detail="Token not valid for this video")
-        current_user = db.query(User).filter(User.id == int(user_id)).first()
-        r.delete(r_key)  # one time use
-
     if current_user is None:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
@@ -120,6 +89,11 @@ def get_video(
                 chunk_size = 1024 * 1024
                 bytes_to_send = end - start + 1
                 while bytes_to_send > 0:
+                    # 👈 Check bandwidth before each chunk
+                    try:
+                        check_bandwidth(current_user)
+                    except HTTPException:
+                        break  # 👈 stop streaming when limit hit
                     heartbeat_stream(session_id)
                     read_bytes = min(chunk_size, bytes_to_send)
                     data = f.read(read_bytes)
