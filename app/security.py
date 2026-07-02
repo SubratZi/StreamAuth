@@ -7,14 +7,17 @@ from database import get_sessions
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from models import User,RefreshToken
+import os
+
+is_production = os.getenv("ENVIRONMENT", "development") == "production"
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated = "auto")
 
 # JWT settings
-SECRET_KEY = "$2b$12$G2r6Pe3WzRDY26M0FKpx2e4PJUe1g0DbsU7QG46w1qvOPL4mz0SBa"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 10
-REFRESH_TOKEN_EXPIRE_DAYS = 7
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"),10)
+REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS"),7)
 
 
 def hash_password(password: str) -> str:
@@ -51,6 +54,7 @@ def get_current_user(
     token: str = Depends(oauth2_scheme),
     refresh_token: str | None = Cookie(None),
 ):
+    
     try:
         payload = decode_token(token)
         username = payload.get("sub")
@@ -131,7 +135,7 @@ def get_current_user(
             key="refresh_token",
             value=new_refresh_token,
             httponly=True,
-            secure=True,
+            secure=is_production,
             samesite="lax",
             max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         )

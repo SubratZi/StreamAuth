@@ -7,7 +7,6 @@ import Profile from "./pages/Profile";
 import Upload from "./pages/Upload";
 import NotFound from "./pages/NotFound";
 import Video from "./pages/Video"
-
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 

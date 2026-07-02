@@ -1,7 +1,8 @@
 from sqlmodel import Session,SQLModel,create_engine
 from sqlalchemy.ext.declarative import declarative_base
+import os
 
-sqlite_url = "sqlite:///./streamauth.db"
+sqlite_url = os.getenv("DATABASE_URL", "sqlite:///./streamauth.db")
 
 engine = create_engine(sqlite_url, connect_args={"check_same_thread":False})
 Base = declarative_base()

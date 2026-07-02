@@ -1,7 +1,8 @@
-import { Navigate,Outlet, replace } from "react-router-dom";
+import { Navigate, replace } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { Children } from "react";
 
-export default function AdminRoute() {
+export default function AdminRoute({children}) {
     const {user, loading} = useAuth();
 
     if (loading){
@@ -29,5 +30,5 @@ export default function AdminRoute() {
         return <Navigate to="/" replace/>
     }
 
-    return <Outlet/>;
+    return children;
 }
