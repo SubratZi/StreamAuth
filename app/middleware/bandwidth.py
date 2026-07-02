@@ -8,7 +8,7 @@ FREE_LIMIT = 20*1024*1024
 PAID_LIMIT = 5*1024*1024*1024
 
 def get_bandwidth_key(user_id:int):
-    return f"bandwidth:{user_id}"
+    return f"download_bandwidth:{user_id}"
 
 def check_bandwidth(user):
     if user.roles == "admin":

@@ -1,46 +1,72 @@
+import os
+import time
 import redis
 from fastapi import HTTPException
-import os
- 
+
 r = redis.Redis(
     host=os.getenv("REDIS_HOST", "localhost"),
     port=int(os.getenv("REDIS_PORT", 6379)),
     password=os.getenv("REDIS_PASSWORD", None),
-    db = 0,
+    db=0,
     decode_responses=True,
 )
 
-FREE_LIMIT = 8
-PAID_LIMIT = 100
-WINDOW = 60 #in seconds
+# ---------- Streaming limits ----------
+FREE_STREAM_LIMIT = (8, 60)          
+PAID_STREAM_LIMIT = (30, 60)         
 
-def get_rate_key(user_id:int):
-    return f"rate_limit:{user_id}"
+# ---------- Upload limits ----------
+FREE_UPLOAD_LIMIT = (5, 3600)        
+PAID_UPLOAD_LIMIT = (50, 3600)       
 
-def check_rate_limit(user):
 
-    # Unlimited for admin:
-    if user.roles =="admin":
-        return
-    
-    limit = PAID_LIMIT if user.is_paid  else FREE_LIMIT
+def _check_limit(key: str, limit: int, window: int):
+    now = time.time()
+    pipe = r.pipeline()
 
-    key = get_rate_key(user.id)
+    pipe.zremrangebyscore(key, 0, now - window)
+    pipe.zcard(key)
 
-    current = r.incr(key)
+    _, current = pipe.execute()
 
-    if current ==1:
-        r.expire(key, WINDOW)
-    
-    if current > limit:
-        ttl =r.ttl(key)
-
+    if current >= limit:
         raise HTTPException(
             status_code=429,
-            detail={
-                "message":"Rate Limit Exceeded",
-                "limit": limit,
-                "window_seconds": WINDOW,
-                "retry_after": ttl,
-            }
+            detail=f"Rate limit exceeded. Try again later.",
         )
+
+    pipe = r.pipeline()
+    pipe.zadd(key, {str(now): now})
+    pipe.expire(key, window)
+    pipe.execute()
+
+
+def check_rate_limit(user, action: str = "stream"):
+    """
+    action:
+        - "stream" -> GET /videos/{id}
+        - "upload" -> POST /videos/upload
+    """
+
+    # Admin bypass
+    if user.roles == "admin":
+        return
+
+    if action == "stream":
+        limit, window = (
+            PAID_STREAM_LIMIT
+            if user.is_paid
+            else FREE_STREAM_LIMIT
+        )
+    elif action == "upload":
+        limit, window = (
+            PAID_UPLOAD_LIMIT
+            if user.is_paid
+            else FREE_UPLOAD_LIMIT
+        )
+    else:
+        return
+
+    key = f"rate_limit:{action}:{user.id}"
+
+    _check_limit(key, limit, window)
