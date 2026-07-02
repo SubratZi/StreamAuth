@@ -71,7 +71,7 @@ export default function Login() {
                 <p style={styles.footer}>
                     Want to explore?{" "}
                     <Link to="/demo" style={{ color: "#f59e0b", textDecoration: "none" }}>
-                        Try Demo 🚀
+                        Try Demo 
                     </Link>
                 </p>
 

@@ -6,6 +6,7 @@ export default function Demo() {
     const navigate = useNavigate();
 
     const handleDemo = async () => {
+        console.log("API URL:", import.meta.env.VITE_API_URL)
         try {
             await login("demo", "123");
             navigate("/home");
@@ -17,13 +18,13 @@ export default function Demo() {
     return (
         <div style={styles.page}>
             <div style={styles.container}>
-                <h1 style={styles.title}>StreamAuth 🎬</h1>
+                <h1 style={styles.title}>StreamAuth</h1>
                 <p style={styles.subtitle}>
                     A video streaming platform with authentication, bandwidth limiting, and concurrent stream control.
                 </p>
 
                 <div style={styles.card}>
-                    <h2 style={styles.cardTitle}>✨ Try the Demo</h2>
+                    <h2 style={styles.cardTitle}>Try the Demo</h2>
                     <p style={styles.cardText}>
                         Click below to instantly log in as an <strong>admin</strong> and explore all features.
                     </p>
@@ -34,10 +35,10 @@ export default function Demo() {
                 </div>
 
                 <div style={styles.features}>
-                    <div style={styles.feature}>⚡ Rate Limiting</div>
-                    <div style={styles.feature}>📊 Bandwidth Control</div>
-                    <div style={styles.feature}>📱 Concurrent Streams</div>
-                    <div style={styles.feature}>🔐 JWT Auth</div>
+                    <div style={styles.feature}> Rate Limiting</div>
+                    <div style={styles.feature}> Bandwidth Control</div>
+                    <div style={styles.feature}> Concurrent Streams</div>
+                    <div style={styles.feature}> JWT Auth</div>
                 </div>
 
                 <p style={styles.footer}>
