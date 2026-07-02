@@ -136,7 +136,7 @@ def get_current_user(
             value=new_refresh_token,
             httponly=True,
             secure=is_production,
-            samesite="lax",
+            samesite="none",
             max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         )
 
