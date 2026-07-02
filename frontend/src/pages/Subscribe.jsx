@@ -57,7 +57,7 @@ export default function Subscribe() {
             <Navbar />
             <div style={styles.center}>
                 <div style={styles.card}>
-                    <h2>You're already a paid user! 👑</h2>
+                    <h2>You're already a paid user! </h2>
                     <button style={styles.button} onClick={() => navigate("/home")}>
                         Go Home
                     </button>
@@ -74,13 +74,13 @@ export default function Subscribe() {
 
                     {/* Plan Info */}
                     <div style={styles.planBanner}>
-                        <h2 style={styles.planTitle}>👑 Upgrade to Paid</h2>
+                        <h2 style={styles.planTitle}> Upgrade to Paid</h2>
                         <p style={styles.planSubtitle}>Unlock premium streaming features</p>
                         <div style={styles.features}>
-                            <p>✅ 4 concurrent devices</p>
-                            <p>✅ 5GB bandwidth/month</p>
-                            <p>✅ 100 requests/minute</p>
-                            <p>✅ Priority support</p>
+                            <p> 4 concurrent devices</p>
+                            <p> 5GB bandwidth/month</p>
+                            <p> 100 requests/minute</p>
+                            <p> Priority support</p>
                         </div>
                         <p style={styles.price}>$9.99 / month</p>
                     </div>
@@ -118,7 +118,7 @@ export default function Subscribe() {
                             {step === 2 && (
                                 <div style={styles.stepContent}>
                                     <h3 style={styles.stepTitle}>Payment Details</h3>
-                                    <p style={styles.demoNote}>⚠️ Demo only — no real payment processed</p>
+                                    <p style={styles.demoNote}> Demo only — no real payment processed</p>
                                     <input style={styles.input} name="card" placeholder="Card Number (demo)" value={form.card} onChange={handleChange} maxLength={16} />
                                     <div style={styles.row}>
                                         <input style={{ ...styles.input, width: "48%" }} name="expiry" placeholder="MM/YY" value={form.expiry} onChange={handleChange} />
